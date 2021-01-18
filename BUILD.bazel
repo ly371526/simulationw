@@ -1,0 +1,15 @@
+COMPILE_DEPS = CORE_DEPS + JACKSON + [
+    "//core/common:onos-core-common-native",
+]
+
+osgi_jar(
+    deps = COMPILE_DEPS,
+)
+
+onos_app(
+    app_name = "org.onosproject.simulationw",
+    category = "Graphical User Interface",
+    description = "Simulation Application relate to Mr. Wang",
+    title = "Simulation Application",
+    url = "http://onosproject.org",
+)
