@@ -7,6 +7,7 @@ import org.onosproject.net.Link;
 import org.onosproject.net.Path;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.link.LinkService;
+import org.onosproject.net.link.LinkStore;
 import org.onosproject.net.provider.ProviderId;
 import org.onosproject.net.topology.*;
 import org.osgi.service.component.annotations.Component;
@@ -27,8 +28,6 @@ public class SatelliteTopology implements SatelliteTopologyService {
     private static final Long time = 10L;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
-    protected LinkService linkService;
-    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected DeviceService deviceService;
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected TopologyService topologyService;
@@ -37,11 +36,11 @@ public class SatelliteTopology implements SatelliteTopologyService {
 
 
     @Override
-    public Topology em_looc(Double d_max, Map<DeviceId, Map<String, Integer>> satelliteNodeParas) {
+    public Topology em_looc(Double d_max, Map<DeviceId, Map<String, Integer>> satelliteNodeParas,
+                            List<Link> links, List<Device> devices) {
 
 
         List<Link> linkList = new ArrayList<>();
-        Iterable<Link> links = linkService.getLinks();
         links.spliterator().forEachRemaining(link -> {
             Integer linkSrcNodeOrbitIndex = satelliteNodeParas.get(link.src().deviceId()).get(SATELLITE_ORBIT_INDEX);
             Integer linkDstNodeOrbitIndex = satelliteNodeParas.get(link.dst().deviceId()).get(SATELLITE_ORBIT_INDEX);
@@ -55,24 +54,17 @@ public class SatelliteTopology implements SatelliteTopologyService {
             }
         });
 
-        List<Device> devices = new ArrayList<>();
-        deviceService.getDevices().spliterator().forEachRemaining(devices::add);
-
         Topology topology = buildTopology(devices, linkList);
 
         return topology;
     }
 
     @Override
-    public Topology elb_looc(Double o_max, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas) {
+    public Topology elb_looc(Double o_max, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas,
+                             List<Link> links, List<Device> devices) {
 
         List<DeviceId> EIZSatelliteList = getEIZSatellite(EIZ, satelliteNodeParas);
-
-        List<Link> links = new ArrayList<>();
-        List<Device> devices = new ArrayList<>();
-        linkService.getLinks().forEach(links::add);
-        deviceService.getDevices().forEach(devices::add);
-
+        
         List<Link> L_INIT = new ArrayList<>();
         List<Link> L_ON = new ArrayList<>();
         links.spliterator().forEachRemaining(link -> {
@@ -167,7 +159,8 @@ public class SatelliteTopology implements SatelliteTopologyService {
     }
 
     @Override
-    public Topology ecb_looc(Double c_j, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas) {
+    public Topology ecb_looc(Double c_j, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas,
+                             List<Link> links, List<Device> devices) {
 
         Integer N_orbit = satelliteNodeParas.get(satelliteNodeParas.keySet().iterator().next())
                 .get(SATELLITE_ORBITS_TOTAL_NUMBER);
@@ -250,9 +243,9 @@ public class SatelliteTopology implements SatelliteTopologyService {
             eachCircleSatelliteEIZ.replace(keyList.get(i), circleSatelliteList);
         }
 
-        List<Link> EIZ_ISL = getEIZ_ISL(EIZSatelliteList, satelliteNodeParas);
+        List<Link> EIZ_ISL = getEIZ_ISL(EIZSatelliteList, satelliteNodeParas, links);
         List<Link> L_ON = new ArrayList<>();
-        linkService.getLinks().spliterator().forEachRemaining(link -> {
+        links.spliterator().forEachRemaining(link -> {
             if (!EIZ_ISL.contains(link)) {
                 L_ON.add(link);
             }
@@ -277,8 +270,6 @@ public class SatelliteTopology implements SatelliteTopologyService {
             }
         });
 
-        List<Device> devices = new ArrayList<>();
-        deviceService.getDevices().forEach(devices::add);
         Topology topology = buildTopology(devices, L_ON);
 
         return topology;
@@ -337,10 +328,11 @@ public class SatelliteTopology implements SatelliteTopologyService {
         return EIZSatelliteList;
     }
 
-    public List<Link> getEIZ_ISL(List<DeviceId> EIZSatelliteList, Map<DeviceId, Map<String, Integer>> satelliteNodeParas) {
+    public List<Link> getEIZ_ISL(List<DeviceId> EIZSatelliteList, Map<DeviceId, Map<String, Integer>> satelliteNodeParas,
+                                 List<Link> links) {
 
         List<Link> EIZ_ISL = new ArrayList<>();
-        linkService.getLinks().spliterator().forEachRemaining(link -> {
+        links.spliterator().forEachRemaining(link -> {
             if (EIZSatelliteList.contains(link.src().deviceId()) && EIZSatelliteList.contains(link.dst().deviceId())) {
                 Integer linkSrcNodeOrbitIndex = satelliteNodeParas.get(link.src().deviceId()).get(SATELLITE_ORBIT_INDEX);
                 Integer linkDstNodeOrbitIndex = satelliteNodeParas.get(link.dst().deviceId()).get(SATELLITE_ORBIT_INDEX);
