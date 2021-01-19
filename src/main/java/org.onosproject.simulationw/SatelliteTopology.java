@@ -277,6 +277,7 @@ public class SatelliteTopology implements SatelliteTopologyService {
 
         List<Link> EIZ_ISL = getEIZ_ISL(EIZSatelliteList, satelliteNodeParas, links);
         List<Link> L_ON = new ArrayList<>();
+        List<Link> L_OFF = new ArrayList<>();
         links.spliterator().forEachRemaining(link -> {
             if (!EIZ_ISL.contains(link)) {
                 L_ON.add(link);
@@ -296,6 +297,8 @@ public class SatelliteTopology implements SatelliteTopologyService {
                             (link.src().deviceId().equals(linkEnd_2) && link.dst().deviceId().equals(linkEnd_1))) {
                         if (linkStatus.equals(true)) {
                             L_ON.add(link);
+                        } else {
+                            L_OFF.add(link);
                         }
                     }
                 });

@@ -6,6 +6,8 @@ import org.onosproject.net.device.DeviceService;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -15,6 +17,8 @@ public class ServiceGenerator implements ServiceGenerateService {
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected DeviceService deviceService;
 
+
+    @Override
     public List<Service> serviceGenerator(Integer servicesTotal) {
 
         List<Service> services = new ArrayList<>();
@@ -31,11 +35,11 @@ public class ServiceGenerator implements ServiceGenerateService {
             DeviceId dstNode = dstDevices.get(dstIndex).id();
             dstDevices.clear();
 
-            Double serviceBandwidthD = random.nextDouble();
+            Double serviceBandwidthD = new BigDecimal(random.nextDouble()).setScale(2, RoundingMode.HALF_DOWN).doubleValue();
             Integer serviceBandwidthI = random.nextInt(5);
             Double serviceBandwidth = serviceBandwidthD + serviceBandwidthI;
 
-            Service service = new DefaultService(srcNode, dstNode, serviceBandwidth, null);
+            Service service = new DefaultService(srcNode, dstNode, serviceBandwidth, null, null);
             services.add(service);
         }
 

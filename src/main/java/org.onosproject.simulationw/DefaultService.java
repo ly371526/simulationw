@@ -9,12 +9,14 @@ public class DefaultService implements Service {
     private DeviceId dstNode;
     private Double serviceBandwidth;
     private Path servicePath;
+    private Double delay;
 
-    DefaultService(DeviceId srcNode, DeviceId dstNode, Double serviceBandwidth, Path servicePath) {
+    DefaultService(DeviceId srcNode, DeviceId dstNode, Double serviceBandwidth, Path servicePath, Double delay) {
         this.srcNode = srcNode;
         this.dstNode = dstNode;
         this.serviceBandwidth = serviceBandwidth;
         this.servicePath = servicePath;
+        this.delay = delay;
     }
 
     @Override
@@ -38,6 +40,11 @@ public class DefaultService implements Service {
         return servicePath;
     }
 
+    @Override
+    public Double delay() {
+        return delay;
+    }
+
     public void setSrcNode(DeviceId srcNode) {
         this.srcNode = srcNode;
     }
@@ -52,5 +59,9 @@ public class DefaultService implements Service {
 
     public void setServicePath(Path servicePath) {
         this.servicePath = servicePath;
+    }
+
+    public void setDelay(Double delay) {
+        this.delay = delay;
     }
 }

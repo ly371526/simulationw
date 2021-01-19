@@ -13,4 +13,15 @@ public interface Service {
 
     Path servicePath();
 
+    Double delay();
+
+    void setSrcNode(DeviceId srcNode);
+
+    void setDstNode(DeviceId dstNode);
+
+    void setServiceBandwidth(Double serviceBandwidth);
+
+    void setServicePath(Path servicePath);
+
+    void setDelay(Double delay);
 }
