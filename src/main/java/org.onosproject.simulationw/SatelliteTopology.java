@@ -64,7 +64,7 @@ public class SatelliteTopology implements SatelliteTopologyService {
                              List<Link> links, List<Device> devices) {
 
         List<DeviceId> EIZSatelliteList = getEIZSatellite(EIZ, satelliteNodeParas);
-        
+
         List<Link> L_INIT = new ArrayList<>();
         List<Link> L_ON = new ArrayList<>();
         links.spliterator().forEachRemaining(link -> {
@@ -81,28 +81,36 @@ public class SatelliteTopology implements SatelliteTopologyService {
             }
         });
 
-
         List<Link> L_OFF = new ArrayList<>();
-        for (int i = 0; i < L_INIT.size(); i++) {
+        int L_INITSize = L_INIT.size();
+        List<Link> L_INITCopy = new ArrayList<>(L_INIT);
+        A:
+        for (int i = 0; i < L_INITSize; i++) {
+            if (L_INIT.isEmpty()) {
+                break A;
+            }
             Link l_cand = l_cand(L_INIT, satelliteNodeParas);
-            links.remove(l_cand);
-            links.removeAll(L_OFF);
-            Topology topology = buildTopology(devices, links);
+            Link l_cand_reverse = getReverseLink(l_cand, L_INITCopy);
+            List<Link> linksCopy = new ArrayList<>(links);
+            linksCopy.remove(l_cand);
+            linksCopy.remove(l_cand_reverse);
+            Topology topology = buildTopology(devices, linksCopy);
             DeviceId src = l_cand.src().deviceId();
             DeviceId dst = l_cand.dst().deviceId();
             List<Path> DP = new ArrayList<>(defaultTopology(topology).getKShortestPaths(src, dst, 5));
 
             Map<Path, Double> dPathOverhead = new HashMap<>();
-            DP.spliterator().forEachRemaining(path -> {
+            List<Path> DPCopy = new ArrayList<>(DP);
+            DPCopy.spliterator().forEachRemaining(path -> {
                 List<Link> linkList = path.links();
-                Double dpLength = null;
+                Double dpLength = 0.0;
                 for (int j = 0; j < linkList.size(); j++) {
                     Link link = linkList.get(j);
                     Double distance = satelliteConstellationService.linkDistance(link, satelliteNodeParas, time);
                     dpLength = dpLength + distance;
                 }
                 Double longestLinkLength = satelliteConstellationService.linkDistance(l_cand, satelliteNodeParas, time);
-                Double overhead = new BigDecimal(dpLength / longestLinkLength).setScale(2).doubleValue();
+                Double overhead = dpLength / longestLinkLength;
                 dPathOverhead.put(path, overhead);
                 if (overhead > o_max) {
                     DP.remove(path);
@@ -112,22 +120,26 @@ public class SatelliteTopology implements SatelliteTopologyService {
             for (int j = 0; j < DP.size(); j++) {
                 Path path = DP.get(j);
                 List<Link> pathLinks = path.links();
-                A:
+                B:
                 for (int k = 0; k < pathLinks.size(); k++) {
                     Link link = pathLinks.get(k);
                     if (L_OFF.contains(link)) {
                         DP.remove(path);
-                        break A;
+                        break B;
                     }
                 }
             }
 
             if (DP.isEmpty()) {
                 L_ON.add(l_cand);
+                L_ON.add(l_cand_reverse);
                 L_INIT.remove(l_cand);
+                L_INIT.remove(l_cand_reverse);
             } else if (DP.size() == 1  && L_ON.containsAll(DP.get(0).links())) {
                 L_OFF.add(l_cand);
+                L_OFF.add(l_cand_reverse);
                 L_INIT.remove(l_cand);
+                L_INIT.remove(l_cand_reverse);
             } else {
                 List<Double> dpOverhead = new ArrayList<>();
                 DP.forEach(path -> {
@@ -135,22 +147,29 @@ public class SatelliteTopology implements SatelliteTopologyService {
                 });
                 Collections.sort(dpOverhead);
                 Path p_dt = null;
+                C:
                 for (int j = 0; j < DP.size(); j++) {
                     Path path = DP.get(j);
                     if (dPathOverhead.get(path).equals(dpOverhead.get(0))) {
                         p_dt = path;
+                        break C;
                     }
                 }
 
                 for (int j = 0; j < p_dt.links().size(); j++) {
                     Link link = p_dt.links().get(j);
                     if (!L_ON.contains(link)) {
+                        Link link_reverse = getReverseLink(link, L_INITCopy);
                         L_ON.add(link);
-                        L_OFF.remove(link);
+                        L_ON.add(link_reverse);
+                        L_INIT.remove(link);
+                        L_INIT.remove(link_reverse);
                     }
                 }
                 L_INIT.remove(l_cand);
+                L_INIT.remove(l_cand_reverse);
                 L_OFF.add(l_cand);
+                L_OFF.add(l_cand_reverse);
             }
 
         }
@@ -220,25 +239,38 @@ public class SatelliteTopology implements SatelliteTopologyService {
         }
 
         Map<Integer, List<Boolean>> OOBs = new HashMap<>();
+        List<Boolean> OOB_next = new ArrayList<>(OOB_base);
         for (int i = 0; i < offsetList.size(); i++) {
             int offset = offsetList.get(i);
             List<Integer> keyList = new ArrayList<>(eachCircleSatelliteEIZ.keySet());
             Collections.sort(keyList);
             List<Boolean> OOB = new ArrayList<>();
-            for (int j = 0; j < OOB_base.size(); j++) {
-                Integer index = (j + offset) % OOB_base.size();
-                OOB.add(index, OOB_base.get(j));
+            for (int j = 0; j < OOB_next.size(); j++) {
+                Integer index = (j + offset) % OOB_next.size();
+                if (index >= OOB.size()) {
+                    OOB.add(OOB_next.get(j));
+                } else {
+                    OOB.add(index, OOB_next.get(j));
+                }
+
             }
             OOBs.put(keyList.get(i), OOB);
+            OOB_next = OOB;
         }
 
         List<Integer> keyList = new ArrayList<>(eachCircleSatelliteEIZ.keySet());
         for (int i = 0; i < eachCircleSatelliteEIZ.size(); i++) {
             List<DeviceId> circleSatellites = eachCircleSatelliteEIZ.get(keyList.get(i));
-            List<DeviceId> circleSatelliteList = new ArrayList<>();
+            Map<Integer, DeviceId> circleSatelliteMap = new HashMap<>();
             circleSatellites.forEach(deviceId -> {
                 Integer satelliteOrbitIndex = satelliteNodeParas.get(deviceId).get(SATELLITE_ORBIT_INDEX);
-                circleSatelliteList.add(satelliteOrbitIndex - 1, deviceId);
+                circleSatelliteMap.put(satelliteOrbitIndex - 1, deviceId);
+            });
+            List<DeviceId> circleSatelliteList = new ArrayList<>();
+            List<Integer> keys = new ArrayList<>(circleSatelliteMap.keySet());
+            Collections.sort(keys);
+            keys.forEach(key -> {
+                circleSatelliteList.add(circleSatelliteMap.get(key));
             });
             eachCircleSatelliteEIZ.replace(keyList.get(i), circleSatelliteList);
         }
@@ -343,5 +375,20 @@ public class SatelliteTopology implements SatelliteTopologyService {
         });
 
         return EIZ_ISL;
+    }
+
+    public Link getReverseLink(Link link, List<Link> links) {
+
+        Link reverseLink = null;
+        for (int i = 0; i < links.size(); i++) {
+            Link link1 = links.get(i);
+            if (link1.src().deviceId().equals(link.dst().deviceId()) &&
+            link1.dst().deviceId().equals(link.src().deviceId())) {
+                reverseLink = link1;
+                break;
+            }
+        }
+
+        return reverseLink;
     }
 }

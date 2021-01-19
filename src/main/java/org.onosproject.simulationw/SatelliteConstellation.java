@@ -241,10 +241,12 @@ public class SatelliteConstellation implements SatelliteConstellationService {
         Double dstY = dstCoordinate.get("y");
         Double dstZ = dstCoordinate.get("z");
 
-        Double distance = Math.sqrt(Math.pow(Math.abs(srcX - dstX), 2) + Math.pow(Math.abs(srcY - dstY), 2)
+        Double distanceM = Math.sqrt(Math.pow(Math.abs(srcX - dstX), 2) + Math.pow(Math.abs(srcY - dstY), 2)
                 + Math.pow(Math.abs(srcZ - dstZ), 2));
 
-        return distance;
+        Double distanceKm = distanceM / 1000.00;
+
+        return distanceKm;
     }
 
 }

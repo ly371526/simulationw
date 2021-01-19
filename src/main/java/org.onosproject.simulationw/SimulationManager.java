@@ -36,7 +36,7 @@ public class SimulationManager {
         Topology em_looc_Topology = satelliteTopologyService.em_looc(100.0, satelliteNodeParas, links, devices);
 
         Integer[] EIZ = {30, -30};
-        Topology elb_looc_Topology = satelliteTopologyService.elb_looc(1.5, EIZ, satelliteNodeParas, links, devices);
+        Topology elb_looc_Topology = satelliteTopologyService.elb_looc(2.5, EIZ, satelliteNodeParas, links, devices);
 
         Topology ecb_looc_Topology = satelliteTopologyService.ecb_looc(1.0, EIZ, satelliteNodeParas, links, devices);
     }
