@@ -3,6 +3,7 @@ package org.onosproject.simulationw;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.device.DeviceService;
+import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+@Component(immediate = true, service = ServiceGenerateService.class)
 public class ServiceGenerator implements ServiceGenerateService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY)

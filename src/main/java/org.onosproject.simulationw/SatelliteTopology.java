@@ -36,24 +36,26 @@ public class SatelliteTopology implements SatelliteTopologyService {
 
 
     @Override
-    public Topology em_looc(Double d_max, Map<DeviceId, Map<String, Integer>> satelliteNodeParas,
+    public Topology em_looc(Integer[] EIZ, Double d_max, Map<DeviceId, Map<String, Integer>> satelliteNodeParas,
                             List<Link> links, List<Device> devices) {
 
 
-        List<Link> linkList = new ArrayList<>();
-        links.spliterator().forEachRemaining(link -> {
-            Integer linkSrcNodeOrbitIndex = satelliteNodeParas.get(link.src().deviceId()).get(SATELLITE_ORBIT_INDEX);
-            Integer linkDstNodeOrbitIndex = satelliteNodeParas.get(link.dst().deviceId()).get(SATELLITE_ORBIT_INDEX);
-            if (!linkSrcNodeOrbitIndex.equals(linkDstNodeOrbitIndex)) {
-                Double linkDistance = satelliteConstellationService.linkDistance(link, satelliteNodeParas, time);
-                if (linkDistance <= d_max) {
-                    linkList.add(link);
-                }
-            } else {
-                linkList.add(link);
-            }
-        });
-
+        List<Link> linkList = new ArrayList<>(links);
+//        links.spliterator().forEachRemaining(link -> {
+//            Integer linkSrcNodeOrbitIndex = satelliteNodeParas.get(link.src().deviceId()).get(SATELLITE_ORBIT_INDEX);
+//            Integer linkDstNodeOrbitIndex = satelliteNodeParas.get(link.dst().deviceId()).get(SATELLITE_ORBIT_INDEX);
+//            if (!linkSrcNodeOrbitIndex.equals(linkDstNodeOrbitIndex)) {
+//                Double linkDistance = satelliteConstellationService.linkDistance(link, satelliteNodeParas, time);
+//                if (linkDistance <= d_max) {
+//                    linkList.add(link);
+//                }
+//            } else {
+//                linkList.add(link);
+//            }
+//        });
+        List<DeviceId> EIZSatellites = getEIZSatellite(EIZ, satelliteNodeParas);
+        List<Link> EIZ_ISL = getEIZ_ISL(EIZSatellites, satelliteNodeParas, links);
+        linkList.removeAll(EIZ_ISL);
         Topology topology = buildTopology(devices, linkList);
 
         return topology;

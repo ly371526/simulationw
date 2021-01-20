@@ -10,7 +10,7 @@ import java.util.Map;
 
 public interface SatelliteTopologyService {
 
-    Topology em_looc(Double d_max, Map<DeviceId, Map<String, Integer>> satelliteNodeParas, List<Link> links, List<Device> devices);
+    Topology em_looc(Integer[] EIZ, Double d_max, Map<DeviceId, Map<String, Integer>> satelliteNodeParas, List<Link> links, List<Device> devices);
 
     Topology elb_looc(Double o_max, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas, List<Link> links, List<Device> devices);
 

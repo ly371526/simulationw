@@ -56,7 +56,7 @@ public class SimulationManager {
         deviceService.getDevices().forEach(devices::add);
         Map<String, Topology> topologies = new HashMap<>();
         Map<DeviceId, Map<String, Integer>> satelliteNodeParas = satelliteConstellationService.satelliteNodePara();
-        Topology em_looc_Topology = satelliteTopologyService.em_looc(100.0, satelliteNodeParas, links, devices);
+        Topology em_looc_Topology = satelliteTopologyService.em_looc(EIZ,100.0, satelliteNodeParas, links, devices);
         topologies.put(EM_LOOC_TOPOLOGY, em_looc_Topology);
 
         Topology elb_looc_Topology = satelliteTopologyService.elb_looc(2.5, EIZ, satelliteNodeParas, links, devices);
@@ -105,8 +105,8 @@ public class SimulationManager {
             }
             Double serviceSizeD = (double) services.size();
             Double averageDelay = new BigDecimal(delaySum / serviceSizeD)
-                    .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
-            String simulationResult = "拓扑方案：" + topologyName + " --> 时延：" + averageDelay.toString();
+                    .setScale(5, RoundingMode.HALF_DOWN).doubleValue();
+            String simulationResult = "拓扑方案：" + topologyName + " --> 时延：" + averageDelay.toString() + "\n";
             saveAsFileWriter(simulationResult);
             log.info(simulationResult);
         });
@@ -149,8 +149,8 @@ public class SimulationManager {
             Double blockServicesTotal = (double) blockServices.size();
             Double servicesTotal = (double) services.size();
             Double serviceBlockRate = new BigDecimal(blockServicesTotal / servicesTotal)
-                    .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
-            String simulationResult = "拓扑方案：" + topologyName + " --> 阻塞率：" + serviceBlockRate.toString();
+                    .setScale(5, RoundingMode.HALF_DOWN).doubleValue();
+            String simulationResult = "拓扑方案：" + topologyName + " --> 阻塞率：" + serviceBlockRate.toString() + "\n";
             saveAsFileWriter(simulationResult);
             log.info(simulationResult);
         });
