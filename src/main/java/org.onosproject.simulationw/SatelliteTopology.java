@@ -13,6 +13,8 @@ import org.onosproject.net.topology.*;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -20,6 +22,7 @@ import java.util.*;
 @Component(immediate = true, service = SatelliteTopologyService.class)
 public class SatelliteTopology implements SatelliteTopologyService {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
     private static final String SATELLITE_INDEX = "satelliteIndex";
     private static final String SATELLITE_ORBIT_INDEX = "satelliteOrbitIndex";
     private static final String SATELLITE_ORBITS_TOTAL_NUMBER = "satelliteOrbitsTotalNumber";
@@ -55,6 +58,11 @@ public class SatelliteTopology implements SatelliteTopologyService {
 //        });
         List<DeviceId> EIZSatellites = getEIZSatellite(EIZ, satelliteNodeParas);
         List<Link> EIZ_ISL = getEIZ_ISL(EIZSatellites, satelliteNodeParas, links);
+        List<Double> distances = new ArrayList<>();
+        EIZ_ISL.forEach(link -> {
+            Double distance = satelliteConstellationService.linkDistance(link, satelliteNodeParas, time);
+            distances.add(distance);
+        });
         linkList.removeAll(EIZ_ISL);
         Topology topology = buildTopology(devices, linkList);
 
@@ -353,13 +361,20 @@ public class SatelliteTopology implements SatelliteTopologyService {
         Integer EIZ_up = EIZ[0];
         Integer EIZ_down = EIZ[1];
         List<DeviceId> EIZSatelliteList = new ArrayList<>();
-        deviceService.getDevices().spliterator().forEachRemaining(device -> {
-            Map<String, Double> satelliteNodeCoordinate = satelliteConstellationService.satelliteSRCSToGcs(device.id(),
-                    satelliteNodeParas, time);
-            Double satelliteLatitude = satelliteNodeCoordinate.get("latitude");
-            if (satelliteLatitude <= EIZ_up && satelliteLatitude >= EIZ_down) {
-                EIZSatelliteList.add(device.id());
+        satelliteNodeParas.keySet().spliterator().forEachRemaining(deviceId -> {
+            String deviceIdStr = deviceId.toString();
+            try {
+                Map<String, Double> satelliteNodeCoordinate = satelliteConstellationService.satelliteSRCSToGcs(deviceId,
+                        satelliteNodeParas, time);
+                Double satelliteLatitude = satelliteNodeCoordinate.get("latitude");
+                if (satelliteLatitude <= EIZ_up && satelliteLatitude >= EIZ_down) {
+                    EIZSatelliteList.add(deviceId);
+                }
+            } catch (NullPointerException e) {
+                log.info(deviceId.toString());
+                e.printStackTrace();
             }
+
         });
 
         return EIZSatelliteList;

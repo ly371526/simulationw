@@ -1,6 +1,7 @@
 package org.onosproject.simulationw;
 
 
+import org.onosproject.common.DefaultTopology;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.Link;
@@ -43,7 +44,7 @@ public class SimulationManager {
     private static final Long time = 100L;
     private static final Double lightSpeed = 300000.0;
     private static final Double laserLinkBandwidth = 10.0;
-    private static final Integer servicesTotal = 10000;
+    private static final Integer servicesTotal = 1000;
     private static final Integer[] EIZ = {30, -30};
 
     @Activate
@@ -54,21 +55,31 @@ public class SimulationManager {
         List<Device> devices = new ArrayList<>();
         linkService.getLinks().forEach(links::add);
         deviceService.getDevices().forEach(devices::add);
-        Map<String, Topology> topologies = new HashMap<>();
+
         Map<DeviceId, Map<String, Integer>> satelliteNodeParas = satelliteConstellationService.satelliteNodePara();
-        Topology em_looc_Topology = satelliteTopologyService.em_looc(EIZ,100.0, satelliteNodeParas, links, devices);
-        topologies.put(EM_LOOC_TOPOLOGY, em_looc_Topology);
+        Integer[][] EIZs = {{15, -15}, {20, -20}, {35, -35}, {40, -40}, {45, -45}};
+        for (int i = 0; i < EIZs.length; i++) {
+            Integer[] EIZ = EIZs[i];
+            Map<String, Topology> topologies = new HashMap<>();
+            log.info("计算EM_LOOC拓扑");
+            Topology em_looc_Topology = satelliteTopologyService.em_looc(EIZ,100.0, satelliteNodeParas, links, devices);
+            topologies.put(EM_LOOC_TOPOLOGY, em_looc_Topology);
+            log.info("计算ELB_LOOC拓扑");
+            Topology elb_looc_Topology = satelliteTopologyService.elb_looc(2.0, EIZ, satelliteNodeParas, links, devices);
+            topologies.put(ELB_LOOC_TOPOLOGY, elb_looc_Topology);
+            log.info("计算ECB_LOOC拓扑");
+            Topology ecb_looc_Topology = satelliteTopologyService.ecb_looc(1.0, EIZ, satelliteNodeParas, links, devices);
+            topologies.put(ECB_LOOC_TOPOLOGY, ecb_looc_Topology);
 
-        Topology elb_looc_Topology = satelliteTopologyService.elb_looc(2.5, EIZ, satelliteNodeParas, links, devices);
-        topologies.put(ELB_LOOC_TOPOLOGY, elb_looc_Topology);
+            log.info("生成业务");
+            List<Service> services = serviceGenerateService.serviceGenerator(servicesTotal);
 
-        Topology ecb_looc_Topology = satelliteTopologyService.ecb_looc(1.0, EIZ, satelliteNodeParas, links, devices);
-        topologies.put(ECB_LOOC_TOPOLOGY, ecb_looc_Topology);
+            log.info("测试业务时延");
+            serviceDelay(services, topologies, satelliteNodeParas, EIZ);
+            log.info("测试业务阻塞率");
+            serviceBlockRate(services, topologies, links, EIZ);
+        }
 
-        List<Service> services = serviceGenerateService.serviceGenerator(servicesTotal);
-
-        serviceDelay(services, topologies, satelliteNodeParas);
-        serviceBlockRate(services, topologies, links);
 
     }
 
@@ -78,15 +89,16 @@ public class SimulationManager {
     }
 
     public void serviceDelay(List<Service> services, Map<String, Topology> topologies,
-                             Map<DeviceId, Map<String, Integer>> satelliteNodeParas) {
+                             Map<DeviceId, Map<String, Integer>> satelliteNodeParas, Integer[] EIZ) {
 
         topologies.keySet().forEach(topologyName -> {
-            Topology topology = topologies.get(topologyName);
+            DefaultTopology topology = (DefaultTopology) topologies.get(topologyName);
 
             services.spliterator().forEachRemaining(service -> {
                 DeviceId srcNode = service.srcNode();
                 DeviceId dstNode = service.dstNode();
-                Set<Path> paths = topologyService.getPaths(topology, srcNode, dstNode);
+
+                Set<Path> paths = topology.getKShortestPaths(srcNode, dstNode, 1);
                 List<Path> pathList = new ArrayList<>(paths);
                 List<Double> distances = new ArrayList<>();
                 for (int i = 0; i < pathList.size(); i++) {
@@ -106,27 +118,27 @@ public class SimulationManager {
             Double serviceSizeD = (double) services.size();
             Double averageDelay = new BigDecimal(delaySum / serviceSizeD)
                     .setScale(5, RoundingMode.HALF_DOWN).doubleValue();
-            String simulationResult = "拓扑方案：" + topologyName + " --> 时延：" + averageDelay.toString() + "\n";
+            String simulationResult = "EIZ=" + Arrays.toString(EIZ) + "拓扑方案：" + topologyName + " --> 时延：" + averageDelay.toString() + "\n";
             saveAsFileWriter(simulationResult);
             log.info(simulationResult);
         });
     }
 
 
-    public void serviceBlockRate(List<Service> services, Map<String, Topology> topologies, List<Link> links) {
+    public void serviceBlockRate(List<Service> services, Map<String, Topology> topologies, List<Link> links, Integer[] EIZ) {
 
         topologies.keySet().forEach(topologyName -> {
-            Topology topology = topologies.get(topologyName);
+            DefaultTopology topology = (DefaultTopology) topologies.get(topologyName);
             Map<Link, Double> linkBandwidthMap = initAllLinkBandwidth(links);
             List<Service> blockServices = new ArrayList<>();
             List<Service> successServices = new ArrayList<>();
 
-            for (int i = 0; i < services.size(); i++) {
-                Service service = services.get(i);
+            services.spliterator().forEachRemaining(service -> {
+
                 DeviceId srcNode = service.srcNode();
                 DeviceId dstNode = service.dstNode();
                 Double requestBandwidth = service.serviceBandwidth();
-                Set<Path> paths = topologyService.getPaths(topology, srcNode, dstNode);
+                Set<Path> paths = topology.getKShortestPaths(srcNode, dstNode, 3);
                 Path path = paths.iterator().next();
                 List<Double> pathRemainBandwidth = new ArrayList<>();
                 for (int j = 0; j < path.links().size(); j++) {
@@ -144,13 +156,13 @@ public class SimulationManager {
                 } else {
                     blockServices.add(service);
                 }
-            }
+            });
 
             Double blockServicesTotal = (double) blockServices.size();
             Double servicesTotal = (double) services.size();
             Double serviceBlockRate = new BigDecimal(blockServicesTotal / servicesTotal)
                     .setScale(5, RoundingMode.HALF_DOWN).doubleValue();
-            String simulationResult = "拓扑方案：" + topologyName + " --> 阻塞率：" + serviceBlockRate.toString() + "\n";
+            String simulationResult = "EIZ=" + Arrays.toString(EIZ) + "拓扑方案：" + topologyName + " --> 阻塞率：" + serviceBlockRate.toString() + "\n";
             saveAsFileWriter(simulationResult);
             log.info(simulationResult);
         });

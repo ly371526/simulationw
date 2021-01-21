@@ -23,14 +23,11 @@ public class SatelliteConstellation implements SatelliteConstellationService {
     private static final String SATELLITE_ORBITS_TOTAL_NUMBER = "satelliteOrbitsTotalNumber";
     private static final String SATELLITES_NUMBER_OF_SINGLE_ORBIT = "satellitesNumberOfSingleOrbit";
     private static final String SATELLITES_PHASE_FACTOR = "satellitePhaseFactor";
-    private static final Integer satelliteOrbitHeight = 540;
+    private static final Integer satelliteOrbitHeight = 550;
     private static final Integer LEOSatelliteTotal = 66;
     private static final Integer LEOSatelliteOrbitTotal = 6;
     private static final Integer satelliteOrbitInclination = 53;
     private static final Integer satellitePhaseFactor = 0;
-
-
-
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected DeviceService deviceService;
@@ -56,7 +53,7 @@ public class SatelliteConstellation implements SatelliteConstellationService {
              */
             Map<String, Integer> satelliteParaMap = new HashMap<>();
             String deviceIdString = device.id().toString();
-            String s = deviceIdString.substring((deviceIdString.length()) - 2);
+            String s = deviceIdString.substring((deviceIdString.length()) - 3);
             Integer satelliteId = Integer.parseInt(s, 16);
 
             Integer LEOSatelliteTotalOfSingle = LEOSatelliteTotal / LEOSatelliteOrbitTotal;

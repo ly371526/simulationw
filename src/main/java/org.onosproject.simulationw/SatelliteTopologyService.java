@@ -15,4 +15,6 @@ public interface SatelliteTopologyService {
     Topology elb_looc(Double o_max, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas, List<Link> links, List<Device> devices);
 
     Topology ecb_looc(Double c_j, Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas, List<Link> links, List<Device> devices);
+
+    List<DeviceId> getEIZSatellite(Integer[] EIZ, Map<DeviceId, Map<String, Integer>> satelliteNodeParas);
 }

@@ -18,14 +18,19 @@ public class ServiceGenerator implements ServiceGenerateService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected DeviceService deviceService;
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
+    protected SatelliteConstellationService satelliteConstellationService;
 
 
     @Override
     public List<Service> serviceGenerator(Integer servicesTotal) {
 
         List<Service> services = new ArrayList<>();
+//        Integer[] band = {50, -50};
+//        List<DeviceId> devices = satelliteTopologyService.getEIZSatellite(band, satelliteConstellationService.satelliteNodePara());
         List<Device> devices = new ArrayList<>();
-        deviceService.getDevices().forEach(devices::add);
+        deviceService.getDevices().spliterator().forEachRemaining(devices::add);
+
         Random random = new Random();
 
         for (int i = 0; i < servicesTotal; i++) {
@@ -38,7 +43,7 @@ public class ServiceGenerator implements ServiceGenerateService {
             dstDevices.clear();
 
             Double serviceBandwidthD = new BigDecimal(random.nextDouble()).setScale(2, RoundingMode.HALF_DOWN).doubleValue();
-            Integer serviceBandwidthI = random.nextInt(5);
+            Integer serviceBandwidthI = random.nextInt(2);
             Double serviceBandwidth = serviceBandwidthD + serviceBandwidthI;
 
             Service service = new DefaultService(srcNode, dstNode, serviceBandwidth, null, null);
