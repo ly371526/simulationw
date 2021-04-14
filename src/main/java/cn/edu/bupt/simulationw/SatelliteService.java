@@ -1,17 +1,16 @@
-package org.onosproject.simulationw;
+package cn.edu.bupt.simulationw;
 
-import org.onosproject.net.DeviceId;
-import org.onosproject.net.Path;
+import org.jgrapht.GraphPath;
 
-public class DefaultService implements Service {
+public class SatelliteService {
 
-    private DeviceId srcNode;
-    private DeviceId dstNode;
+    private Node srcNode;
+    private Node dstNode;
     private Double serviceBandwidth;
-    private Path servicePath;
+    private GraphPath<Node, Link> servicePath;
     private Double delay;
 
-    DefaultService(DeviceId srcNode, DeviceId dstNode, Double serviceBandwidth, Path servicePath, Double delay) {
+    public SatelliteService(Node srcNode, Node dstNode, Double serviceBandwidth, GraphPath<Node, Link> servicePath, Double delay) {
         this.srcNode = srcNode;
         this.dstNode = dstNode;
         this.serviceBandwidth = serviceBandwidth;
@@ -19,37 +18,31 @@ public class DefaultService implements Service {
         this.delay = delay;
     }
 
-    @Override
-    public DeviceId srcNode() {
+    public Node getSrcNode() {
         return srcNode;
     }
 
-    @Override
-    public DeviceId dstNode() {
+    public Node getDstNode() {
         return dstNode;
     }
 
-
-    @Override
-    public Double serviceBandwidth() {
+    public Double getServiceBandwidth() {
         return serviceBandwidth;
     }
 
-    @Override
-    public Path servicePath() {
+    public GraphPath<Node, Link> getServicePath() {
         return servicePath;
     }
 
-    @Override
-    public Double delay() {
+    public Double getDelay() {
         return delay;
     }
 
-    public void setSrcNode(DeviceId srcNode) {
+    public void setSrcNode(Node srcNode) {
         this.srcNode = srcNode;
     }
 
-    public void setDstNode(DeviceId dstNode) {
+    public void setDstNode(Node dstNode) {
         this.dstNode = dstNode;
     }
 
@@ -57,7 +50,7 @@ public class DefaultService implements Service {
         this.serviceBandwidth = serviceBandwidth;
     }
 
-    public void setServicePath(Path servicePath) {
+    public void setServicePath(GraphPath<Node, Link> servicePath) {
         this.servicePath = servicePath;
     }
 
