@@ -15,7 +15,7 @@ import java.util.*;
 
 public class SimulationManager {
 
-    private SimulationManager(){}
+    public SimulationManager(){}
 
     SatelliteCoordinate satelliteCoordinate = new SatelliteCoordinate();
     private static final Long time = 10L;
@@ -364,9 +364,12 @@ public class SimulationManager {
         }
     }
 
+    public Graph<Node, Link> getInitTopology() {
+        return createInitTopology();
+    }
 
 
-    private static Graph<Node, Link> createInitTopology() {
+    public static Graph<Node, Link> createInitTopology() {
 
         Graph<Node, Link> topology = new DefaultDirectedGraph<>(Link.class);
 
