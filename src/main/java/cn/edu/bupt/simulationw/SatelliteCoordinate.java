@@ -129,7 +129,7 @@ public class SatelliteCoordinate {
         Double longitude = Math.toDegrees(Math.atan2(y, x));
         Double l = Math.sqrt(x * x + y * y);
         Double latitude = Math.toDegrees(Math.atan2(z, l));
-        Double height = z / Math.sin(Math.toRadians(latitude));
+        Double height = z / Math.sin(Math.toRadians(latitude)) / 1000;
 
         satelliteGcsCoordinate.put("longitude", longitude);
         satelliteGcsCoordinate.put("latitude", latitude);
