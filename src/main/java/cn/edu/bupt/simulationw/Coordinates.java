@@ -92,7 +92,7 @@ public class Coordinates {
         try {
             // true表示不覆盖原来的内容，而是加到文件的后面。若要覆盖原来的内容，直接省略这个参数就好
             String p = file.getCanonicalPath();
-            String path = p + "/src/main/resources/Coordinates.txt";
+            String path = p + "/src/main/resources/Coordinates-66*24.txt";
             fileWriter = new FileWriter(path, true);
             fileWriter.write(content);
         } catch (IOException ex) {

@@ -47,7 +47,7 @@ public class Test {
             Double distanceM = Math.sqrt(Math.pow(Math.abs(srcX - dstX), 2) + Math.pow(Math.abs(srcY - dstY), 2)
                     + Math.pow(Math.abs(srcZ - dstZ), 2));
 
-            Double distanceKm = distanceM / 1000.00;
+            Double distanceKm = distanceM;
             distances.add(distanceKm);
         }
         System.out.println("11");
